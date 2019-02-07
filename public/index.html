@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <h1>
+        <time id="clock">00:00:00</time>
+    </h1>
+    <button id="startBtn">Start</button>
+    <button id="stopBtn">Stop</button>
+    <button id="resetBtn">Reset</button>
+    <br><br>
+    <button id="userSendBtn">Send by User</button>
+
+    <h4 id="log">
+    </h4>
+
+    <script>
+        //referring to the elements in the HTML document
+        var clock = document.getElementById('clock'),
+            start = document.getElementById('startBtn'),
+            stop = document.getElementById('stopBtn'),
+            clear = document.getElementById('resetBtn'),
+            userSend = document.getElementById('userSendBtn'),
+            milisecond = 0, second = 0, minute = 0,
+            t,
+            started = false;
+        
+        //increment the timer values
+        function add() {
+            milisecond++;
+            if (milisecond >= 100) {
+                milisecond = 0;
+                second++;
+                if (second >= 60) {
+                    second = 0;
+                    minute++;
+                }
+            }
+
+            clock.textContent = (minute ? (minute > 9 ? minute : "0" + minute) : "00") + ":" + (second ? (second > 9 ? second : "0" + second) : "00") + ":" + (milisecond > 9 ? milisecond : "0" + milisecond);
+            
+            //send out message every 3 seconds
+            if ((second != 0) && (second % 3 == 0) && milisecond == 0) {
+                sendTimerMessage();
+            }
+            //continuously loop this add() function every 10 miliseconds by calling timer().
+            timer();
+        }
+
+        //triggers the add() function after 10 miliseconds
+        function timer() {
+            t = setTimeout(add, 10);
+        }
+        
+        //add in the rest of the functions here
+
+
+        //start the timer counting
+        function startTimer() {
+            //when timer start , do not start it again
+            if (!started) {
+                timer();
+                started = true;
+            }
+        }
+
+        //start button
+        start.onclick = startTimer;
+        
+        // stop button
+        stop.onclick = function() {
+            // stop timer only if it was started
+            if (started) {
+                clearTimeout(t);
+                started = false;
+            }
+        }
+        
+        //clear or reset button
+        clear.onclick = function() {
+            if (!started) {
+                clock.textContent = "00:00:00";
+                milisecond = 0; second = 0; minute = 0;
+            }
+        }
+
+        //triggered by timer every 3 seconds
+        function sendTimerMessage() {
+            var data = {
+                type: 1,
+                message: "timer"
+            }
+            console.log("sending timer msg: " + second);
+            sendAjax(data);
+        }
+
+        // triggered by user clicking the send message button
+        function sendButtonMessage() {
+            var data = {
+                type:2,
+                message: "button"
+            }
+            console.log("sending user msg");
+            sendAjax(data);
+        }
+
+        //user send button clicked
+        userSend.onclick = sendButtonMessage;
+
+        // sending the message by AJAX
+        var maxLines = 10;
+        var lines = 0;
+        function sendAjax(theMessage) {
+            $.ajax({
+                url: "http://localhost:3000/",
+                type: 'POST',
+                data: JSON.stringify(theMessage),
+                dataType: "json",
+                contentType: "application/json",
+                success:function (result) {
+                    // display the reply from server under the timer , maximum 10 lines
+                    if (lines != maxLines) {
+                        lines++;
+                        $("#log").append('<p>' + lines + ' ' + result.message + '</p>');
+                    }
+                    else{
+                        lines = 1;
+                        $("#log").html("");
+                        $("#log").append('<p>' + lines + ' ' + result.message + '</p>');
+                    }
+                },
+                error: function (error) {
+                    alert("Unable to send message.");
+                    console.log(error);
+                }
+            })
+        }
+    </script>
+</body>
+
+</html>
