@@ -9,6 +9,9 @@ var bodyParser = require('body-parser');
 var index = require('./server/controllers/index');
 // Import login controller
 var auth = require('./server/controllers/auth');
+// Import comments controller @@@
+var comments = require('./server/controllers/comments');
+
 
 // Modules to store session
 var myDatabase = require('./server/controllers/database');
@@ -87,6 +90,12 @@ app.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
 });
+
+// set up routes for comments ////
+app.get('/comments' , comments.hasAuthorization , comments.list);
+app.post('/comments' , comments.hasAuthorization , comments.create);
+app.delete('/comments/:comments_id' , comments.hasAuthorization , comments.delete);
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
