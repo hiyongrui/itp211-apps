@@ -112,6 +112,42 @@ app.post("/images", images.hasAuthorization, upload.single("image"), images.uplo
 app.get("/videos", videos.hasAuthorization, videos.show);
 app.post("/videos", videos.hasAuthorization, upload.single("video"), videos.uploadVideo);
 
+//Setup chat
+var io = require("socket.io")(httpServer);
+var chatConnections = 0;
+var ChatMsg = require("./server/models/chatMsg");
+
+io.on("connection", function(socket) {
+    chatConnections++;
+    console.log("Num of chat users connected: "+chatConnections);
+
+    socket.on('disconnect', function() {
+        chatConnections--;
+        console.log("Num of chat users connected after disconnect: " + chatConnections);
+    })
+})
+app.get('/messages', (req,res)=>{
+    ChatMsg.findAll().then((chatMessages)=>{
+        res.render('chatMsg',{
+            url: req.protocol+"://"+req.get("host")+req.url,
+            data:chatMessages
+        })
+    })
+})
+app.post('/messages', (req, res)=>{
+    var chatData = {
+        name:req.body.name,
+        message:req.body.message
+    }
+    //save to database
+    ChatMsg.create(chatData).then((newMessage) => {
+        if (!newMessage) {
+            sendStatus(500);
+        }
+        io.emit('message', req.body);
+        res.sendStatus(200);
+    })
+})
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
