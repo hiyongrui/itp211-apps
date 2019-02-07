@@ -5,12 +5,20 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+// import multer 
+var multer = require('multer');  //                               15 mb now i added another 0 to it cos of the song "exit premise" 6mb..
+var upload = multer({dest:'./public/uploads/', limits: {fileSize: 15000000, files:1}});   //1.5 megabyte file size limit , file only can 1
+
 // Import home controller
 var index = require('./server/controllers/index');
 // Import login controller
 var auth = require('./server/controllers/auth');
 // Import comments controller @@@
 var comments = require('./server/controllers/comments');
+// Import videos controller @@@
+var images = require('./server/controllers/images');
+// Import videos controller @@@
+var videos = require('./server/controllers/videos');
 
 
 // Modules to store session
@@ -95,6 +103,14 @@ app.get('/logout', function (req, res) {
 app.get('/comments' , comments.hasAuthorization , comments.list);
 app.post('/comments' , comments.hasAuthorization , comments.create);
 app.delete('/comments/:comments_id' , comments.hasAuthorization , comments.delete);
+
+// set up routes for images //
+app.get("/images-gallery", images.hasAuthorization, images.show);
+app.post("/images", images.hasAuthorization, upload.single("image"), images.uploadImage);
+
+// set up routes for videos //
+app.get("/videos", videos.hasAuthorization, videos.show);
+app.post("/videos", videos.hasAuthorization, upload.single("video"), videos.uploadVideo);
 
 
 // catch 404 and forward to error handler
